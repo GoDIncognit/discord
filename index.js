@@ -1,7 +1,8 @@
 const { 
   Client, 
   GatewayIntentBits, 
-  PermissionsBitField 
+  PermissionsBitField,
+  EmbedBuilder
 } = require('discord.js');
 
 const client = new Client({
@@ -17,61 +18,59 @@ client.once('ready', () => {
   console.log(`Bot encendido como ${client.user.tag}`);
 });
 
+/* 📢 MENSAJE DE BIENVENIDA */
+client.on('guildMemberAdd', member => {
+  const canal = member.guild.systemChannel;
+  if (!canal) return;
+
+  const embed = new EmbedBuilder()
+    .setColor("Blue")
+    .setTitle("🎉 Nuevo miembro")
+    .setDescription(`Bienvenido ${member} al servidor!\n\nEscribe **!help** para ver mis comandos.`)
+    .setTimestamp();
+
+  canal.send({ embeds: [embed] });
+});
+
 client.on('messageCreate', async (message) => {
   if (!message.guild) return;
   if (message.author.bot) return;
 
   try {
 
-    // Ping
+    /* 🏓 PING */
     if (message.content === '!ping') {
       return message.reply('Pong 🏓');
     }
 
-    // IA
+    /* 📜 HELP */
+    if (message.content === '!help') {
+      const embed = new EmbedBuilder()
+        .setColor("Green")
+        .setTitle("📖 Comandos disponibles")
+        .setDescription(`
+        🏓 **!ping** → Verifica si estoy activo  
+        🤖 **!ia (mensaje)** → Respuesta IA simple  
+        🔨 **!ban @user** → Banear usuario  
+        👢 **!kick @user** → Expulsar usuario  
+        🧹 **!clear número** → Borrar mensajes  
+        `)
+        .setFooter({ text: "Bot desarrollado por GoDIncognit" });
+
+      return message.reply({ embeds: [embed] });
+    }
+
+    /* 🤖 IA SIMPLE */
     if (message.content.startsWith('!ia')) {
-      const pregunta = message.content.slice(3).trim();
-      if (!pregunta) return message.reply("Escribe algo después de !ia");
+      const texto = message.content.slice(3).trim();
+      if (!texto) return message.reply("Escribe algo después de !ia");
 
-      return message.reply("🤖 Estoy pensando...");
+      return message.reply(`🤖 Respuesta automática a: "${texto}"`);
     }
 
-    // Ban
-    if (message.content.startsWith('!ban')) {
-      if (!message.member.permissions.has(PermissionsBitField.Flags.BanMembers))
-        return message.reply("No tienes permiso.");
-
-      const user = message.mentions.members.first();
-      if (!user) return message.reply("Menciona a alguien.");
-
-      await user.ban();
-      return message.channel.send(`🔨 ${user.user.tag} fue baneado.`);
-    }
-
-    // Kick
-    if (message.content.startsWith('!kick')) {
-      if (!message.member.permissions.has(PermissionsBitField.Flags.KickMembers))
-        return message.reply("No tienes permiso.");
-
-      const user = message.mentions.members.first();
-      if (!user) return message.reply("Menciona a alguien.");
-
-      await user.kick();
-      return message.channel.send(`👢 ${user.user.tag} fue expulsado.`);
-    }
-
-    // Clear
-    if (message.content.startsWith('!clear')) {
-      if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages))
-        return message.reply("No tienes permiso.");
-
-      const cantidad = parseInt(message.content.split(" ")[1]);
-      if (!cantidad || cantidad < 1 || cantidad > 100)
-        return message.reply("Pon un número entre 1 y 100.");
-
-      await message.channel.bulkDelete(cantidad, true);
-      const msg = await message.channel.send(`🧹 ${cantidad} mensajes eliminados.`);
-      setTimeout(() => msg.delete(), 3000);
+    /* 💬 RESPUESTA AUTOMÁTICA */
+    if (message.content.toLowerCase() === 'hola') {
+      return message.reply("👋 Hola! Escribe !help para ver lo que puedo hacer.");
     }
 
   } catch (error) {

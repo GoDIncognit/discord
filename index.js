@@ -17,92 +17,66 @@ client.once('ready', () => {
   console.log(`Bot encendido como ${client.user.tag}`);
 });
 
-/* =========================
-   MODERACIÓN
-========================= */
-
-// Ban
-client.on('messageCreate', async message => {
+client.on('messageCreate', async (message) => {
+  if (!message.guild) return;
   if (message.author.bot) return;
 
-  if (message.content.startsWith('!ban')) {
-    if (!message.member.permissions.has(PermissionsBitField.Flags.BanMembers))
-      return message.reply("No tienes permiso para banear.");
+  try {
 
-    const user = message.mentions.members.first();
-    if (!user) return message.reply("Menciona a alguien para banear.");
+    // Ping
+    if (message.content === '!ping') {
+      return message.reply('Pong 🏓');
+    }
 
-    await user.ban();
-    message.channel.send(`🔨 ${user.user.tag} fue baneado.`);
-  }
-});
+    // IA
+    if (message.content.startsWith('!ia')) {
+      const pregunta = message.content.slice(3).trim();
+      if (!pregunta) return message.reply("Escribe algo después de !ia");
 
-// Kick
-client.on('messageCreate', async message => {
-  if (message.author.bot) return;
+      return message.reply("🤖 Estoy pensando...");
+    }
 
-  if (message.content.startsWith('!kick')) {
-    if (!message.member.permissions.has(PermissionsBitField.Flags.KickMembers))
-      return message.reply("No tienes permiso para expulsar.");
+    // Ban
+    if (message.content.startsWith('!ban')) {
+      if (!message.member.permissions.has(PermissionsBitField.Flags.BanMembers))
+        return message.reply("No tienes permiso.");
 
-    const user = message.mentions.members.first();
-    if (!user) return message.reply("Menciona a alguien para expulsar.");
+      const user = message.mentions.members.first();
+      if (!user) return message.reply("Menciona a alguien.");
 
-    await user.kick();
-    message.channel.send(`👢 ${user.user.tag} fue expulsado.`);
-  }
-});
+      await user.ban();
+      return message.channel.send(`🔨 ${user.user.tag} fue baneado.`);
+    }
 
-// Clear mensajes
-client.on('messageCreate', async message => {
-  if (message.author.bot) return;
+    // Kick
+    if (message.content.startsWith('!kick')) {
+      if (!message.member.permissions.has(PermissionsBitField.Flags.KickMembers))
+        return message.reply("No tienes permiso.");
 
-  if (message.content.startsWith('!clear')) {
-    if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages))
-      return message.reply("No tienes permiso.");
+      const user = message.mentions.members.first();
+      if (!user) return message.reply("Menciona a alguien.");
 
-    const cantidad = parseInt(message.content.split(" ")[1]);
-    if (!cantidad) return message.reply("Escribe cuántos mensajes borrar.");
+      await user.kick();
+      return message.channel.send(`👢 ${user.user.tag} fue expulsado.`);
+    }
 
-    await message.channel.bulkDelete(cantidad, true);
-    message.channel.send(`🧹 ${cantidad} mensajes eliminados.`).then(msg => {
+    // Clear
+    if (message.content.startsWith('!clear')) {
+      if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages))
+        return message.reply("No tienes permiso.");
+
+      const cantidad = parseInt(message.content.split(" ")[1]);
+      if (!cantidad || cantidad < 1 || cantidad > 100)
+        return message.reply("Pon un número entre 1 y 100.");
+
+      await message.channel.bulkDelete(cantidad, true);
+      const msg = await message.channel.send(`🧹 ${cantidad} mensajes eliminados.`);
       setTimeout(() => msg.delete(), 3000);
-    });
-  }
-});
+    }
 
-/* =========================
-   IA SIMPLE (modo pro)
-========================= */
-
-client.on('messageCreate', async message => {
-  if (message.author.bot) return;
-
-  if (message.content.startsWith('!ia')) {
-    const pregunta = message.content.replace('!ia', '');
-
-    if (!pregunta)
-      return message.reply("Escribe algo después de !ia");
-
-    message.reply("🤖 Estoy pensando...");
-
-    // IA simple estilo simulación
-    const respuestas = [
-      "Interesante pregunta...",
-      "Creo que deberías pensarlo mejor 😈",
-      "Eso suena peligroso...",
-      "Podría funcionar...",
-      "No estoy seguro, pero suena bien.",
-      "Definitivamente sí.",
-      "Definitivamente no.",
-    ];
-
-    const respuesta =
-      respuestas[Math.floor(Math.random() * respuestas.length)];
-
-    setTimeout(() => {
-      message.channel.send(`🤖 IA: ${respuesta}`);
-    }, 2000);
+  } catch (error) {
+    console.error(error);
+    message.reply("⚠️ Ocurrió un error.");
   }
 });
 

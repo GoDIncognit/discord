@@ -30,10 +30,12 @@ const client = new Client({
 const levels = new Map();
 let warns = {};
 
+// Cargar advertencias desde JSON
 if (fs.existsSync('./warns.json')) {
   warns = JSON.parse(fs.readFileSync('./warns.json', 'utf8'));
 }
 
+// Guardar advertencias en JSON
 function saveWarns() {
   fs.writeFileSync('./warns.json', JSON.stringify(warns, null, 2));
 }
@@ -42,6 +44,7 @@ function saveWarns() {
 // Palabras prohibidas
 // ---------------------------
 const blacklist = ['insulto1', 'insulto2', 'maldicion', 'tonto', 'idiota']; 
+const warnedTemp = new Map(); // para avisos antes de la advertencia
 
 // ---------------------------
 // Evento ready
@@ -71,8 +74,6 @@ client.on('messageCreate', message => {
 // ---------------------------
 // Moderación automática
 // ---------------------------
-const warnedTemp = new Map(); // para avisos antes de la advertencia
-
 client.on('messageCreate', async message => {
   if (!message.guild || message.author.bot) return;
 
@@ -89,7 +90,7 @@ client.on('messageCreate', async message => {
       return;
     }
 
-    // Segunda infracción: dar advertencia
+    // Segunda infracción: sumar advertencia
     if (!warns[message.author.id]) warns[message.author.id] = 0;
     warns[message.author.id] += 1;
     saveWarns();
@@ -115,12 +116,9 @@ client.on('messageCreate', async message => {
 // ---------------------------
 client.on('interactionCreate', async interaction => {
   try {
-
-    // ================= DM PANEL =================
     if (!interaction.guild) {
-
+      // Panel DM
       if (interaction.isChatInputCommand()) {
-
         if (interaction.commandName === "panel") {
           const embed = new EmbedBuilder()
             .setColor("Blue")
@@ -132,7 +130,6 @@ client.on('interactionCreate', async interaction => {
               .setCustomId("ping_dm")
               .setLabel("🏓 Ping")
               .setStyle(ButtonStyle.Primary),
-
             new ButtonBuilder()
               .setCustomId("nivel_dm")
               .setLabel("📊 Mi Nivel")
@@ -172,7 +169,6 @@ client.on('interactionCreate', async interaction => {
 
     // ================= Servidor =================
     if (interaction.isChatInputCommand()) {
-
       const user = interaction.options.getUser ? interaction.options.getUser("usuario") : null;
 
       switch (interaction.commandName) {

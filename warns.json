@@ -1,0 +1,14 @@
+const fs = require('fs');
+
+// Cargar datos de warns desde el archivo JSON
+let warns = {};
+try {
+  warns = JSON.parse(fs.readFileSync('./warns.json', 'utf8'));
+} catch (err) {
+  warns = {};
+}
+
+// Función para guardar cambios en warns.json
+function saveWarns() {
+  fs.writeFileSync('./warns.json', JSON.stringify(warns, null, 2));
+}

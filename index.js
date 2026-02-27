@@ -71,7 +71,7 @@ client.on('messageCreate', async (message) => {
 ⚠️ **!warn @usuario**
 📋 **!warns @usuario**
         `)
-        .setFooter({ text: "Bot desarrollado por GoDIncognit" });
+        .setFooter({ text: "Bot desarrollado por Jeremy Louis" });
 
       return message.reply({ embeds: [embed] });
     }
@@ -143,3 +143,4 @@ client.on('messageCreate', async (message) => {
 });
 
 client.login(process.env.TOKEN);
+

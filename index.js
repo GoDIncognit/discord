@@ -10,7 +10,8 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.DirectMessages
   ]
 });
 
@@ -36,11 +37,42 @@ client.on('guildMemberAdd', member => {
 });
 
 client.on('messageCreate', async (message) => {
+
   if (message.author.bot) return;
 
   try {
 
-    /* ===== ANTI SPAM ===== */
+    /* ===================================================== */
+    /* ==================== MENSAJES DM ==================== */
+    /* ===================================================== */
+
+    if (!message.guild) {
+
+      if (message.content === '!help') {
+        return message.reply(`
+🤖 **Hola! Soy tu bot de moderación**
+
+Para usarme correctamente:
+1️⃣ Agrégame a un servidor
+2️⃣ Usa !help dentro del servidor
+
+🔗 Link para agregarme:
+https://discord.com/oauth2/authorize?client_id=1476975549376237639&permissions=8&integration_type=0&scope=bot
+        `);
+      }
+
+      if (message.content === '!ping') {
+        return message.reply('🏓 Pong! (desde mensaje privado)');
+      }
+
+      return message.reply("👋 Hola! Usa **!help** para ver información.");
+    }
+
+    /* ===================================================== */
+    /* ==================== SERVIDORES ===================== */
+    /* ===================================================== */
+
+    /* ===== ANTI SPAM (solo servidor) ===== */
     const now = Date.now();
     const timestamps = spamControl.get(message.author.id) || [];
     timestamps.push(now);
@@ -69,10 +101,19 @@ client.on('messageCreate', async (message) => {
 👢 **!kick @usuario**
 ⚠️ **!warn @usuario**
 📋 **!warns @usuario**
+🔗 **!invite**
         `)
         .setFooter({ text: "Bot desarrollado por Jeremy Louis" });
 
       return message.reply({ embeds: [embed] });
+    }
+
+    /* ===== INVITE ===== */
+    if (message.content === '!invite') {
+      return message.reply(`
+🔗 **Invítame a otro servidor:**
+https://discord.com/oauth2/authorize?client_id=1476975549376237639&permissions=8&integration_type=0&scope=bot
+      `);
     }
 
     /* ===== CLEAR ===== */
@@ -113,7 +154,7 @@ client.on('messageCreate', async (message) => {
     }
 
     /* ===== WARN ===== */
-    if (message.content.startsWith('!warn')) {
+    if (message.content.startsWith('!warn ')) {
       if (!message.member.permissions.has(PermissionsBitField.Flags.ModerateMembers))
         return message.reply("❌ No tienes permiso.");
 
@@ -139,8 +180,7 @@ client.on('messageCreate', async (message) => {
     console.error(error);
     message.reply("⚠️ Ocurrió un error.");
   }
+
 });
 
 client.login(process.env.TOKEN);
-
-

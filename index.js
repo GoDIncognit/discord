@@ -9,178 +9,79 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.DirectMessages
+    GatewayIntentBits.MessageContent
   ]
 });
 
-const warns = new Map();
-const spamControl = new Map();
+const levels = new Map();
 
 client.once('ready', () => {
-  console.log(`🔥 Bot activo como ${client.user.tag}`);
+  console.log(`🔥 ${client.user.tag} está online`);
 });
 
-/* ===== BIENVENIDA ===== */
-client.on('guildMemberAdd', member => {
-  const canal = member.guild.systemChannel;
-  if (!canal) return;
+/* =======================
+   SISTEMA DE NIVELES
+======================= */
 
-  const embed = new EmbedBuilder()
-    .setColor("Blue")
-    .setTitle("🎉 Bienvenido al servidor")
-    .setDescription(`Hola ${member}, usa **!help** para ver los comandos.`)
-    .setTimestamp();
+client.on('messageCreate', message => {
+  if (!message.guild || message.author.bot) return;
 
-  canal.send({ embeds: [embed] });
-});
+  const userData = levels.get(message.author.id) || { xp: 0, level: 1 };
 
-client.on('messageCreate', async (message) => {
+  userData.xp += 10;
 
-  if (message.author.bot) return;
-
-  try {
-
-    /* ===================================================== */
-    /* ==================== MENSAJES DM ==================== */
-    /* ===================================================== */
-
-    if (!message.guild) {
-
-      if (message.content === '!help') {
-        return message.reply(`
-🤖 **Hola! Soy tu bot de moderación**
-
-Para usarme correctamente:
-1️⃣ Agrégame a un servidor
-2️⃣ Usa !help dentro del servidor
-
-🔗 Link para agregarme:
-https://discord.com/oauth2/authorize?client_id=1476975549376237639&permissions=8&integration_type=0&scope=bot
-        `);
-      }
-
-      if (message.content === '!ping') {
-        return message.reply('🏓 Pong! (desde mensaje privado)');
-      }
-
-      return message.reply("👋 Hola! Usa **!help** para ver información.");
-    }
-
-    /* ===================================================== */
-    /* ==================== SERVIDORES ===================== */
-    /* ===================================================== */
-
-    /* ===== ANTI SPAM (solo servidor) ===== */
-    const now = Date.now();
-    const timestamps = spamControl.get(message.author.id) || [];
-    timestamps.push(now);
-    spamControl.set(message.author.id, timestamps.filter(t => now - t < 4000));
-
-    if (spamControl.get(message.author.id).length > 5) {
-      await message.delete();
-      return message.channel.send(`🚫 ${message.author}, no hagas spam.`)
-        .then(msg => setTimeout(() => msg.delete(), 3000));
-    }
-
-    /* ===== PING ===== */
-    if (message.content === '!ping') {
-      return message.reply('🏓 Pong!');
-    }
-
-    /* ===== HELP ===== */
-    if (message.content === '!help') {
-      const embed = new EmbedBuilder()
-        .setColor("Green")
-        .setTitle("📖 Comandos disponibles")
-        .setDescription(`
-🏓 **!ping**
-🧹 **!clear número**
-🔨 **!ban @usuario**
-👢 **!kick @usuario**
-⚠️ **!warn @usuario**
-📋 **!warns @usuario**
-🔗 **!invite**
-        `)
-        .setFooter({ text: "Bot desarrollado por Jeremy Louis" });
-
-      return message.reply({ embeds: [embed] });
-    }
-
-    /* ===== INVITE ===== */
-    if (message.content === '!invite') {
-      return message.reply(`
-🔗 **Invítame a otro servidor:**
-https://discord.com/oauth2/authorize?client_id=1476975549376237639&permissions=8&integration_type=0&scope=bot
-      `);
-    }
-
-    /* ===== CLEAR ===== */
-    if (message.content.startsWith('!clear')) {
-      if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages))
-        return message.reply("❌ No tienes permiso.");
-
-      const cantidad = parseInt(message.content.split(" ")[1]);
-      if (!cantidad || cantidad < 1 || cantidad > 100)
-        return message.reply("⚠️ Usa un número entre 1 y 100.");
-
-      await message.channel.bulkDelete(cantidad, true);
-      return message.channel.send(`🧹 ${cantidad} mensajes eliminados.`);
-    }
-
-    /* ===== BAN ===== */
-    if (message.content.startsWith('!ban')) {
-      if (!message.member.permissions.has(PermissionsBitField.Flags.BanMembers))
-        return message.reply("❌ No tienes permiso.");
-
-      const user = message.mentions.members.first();
-      if (!user) return message.reply("⚠️ Menciona a un usuario.");
-
-      await user.ban();
-      return message.channel.send(`🔨 ${user.user.tag} fue baneado.`);
-    }
-
-    /* ===== KICK ===== */
-    if (message.content.startsWith('!kick')) {
-      if (!message.member.permissions.has(PermissionsBitField.Flags.KickMembers))
-        return message.reply("❌ No tienes permiso.");
-
-      const user = message.mentions.members.first();
-      if (!user) return message.reply("⚠️ Menciona a un usuario.");
-
-      await user.kick();
-      return message.channel.send(`👢 ${user.user.tag} fue expulsado.`);
-    }
-
-    /* ===== WARN ===== */
-    if (message.content.startsWith('!warn ')) {
-      if (!message.member.permissions.has(PermissionsBitField.Flags.ModerateMembers))
-        return message.reply("❌ No tienes permiso.");
-
-      const user = message.mentions.members.first();
-      if (!user) return message.reply("⚠️ Menciona a un usuario.");
-
-      const userWarns = warns.get(user.id) || 0;
-      warns.set(user.id, userWarns + 1);
-
-      return message.channel.send(`⚠️ ${user.user.tag} ahora tiene ${userWarns + 1} advertencias.`);
-    }
-
-    /* ===== WARNS ===== */
-    if (message.content.startsWith('!warns')) {
-      const user = message.mentions.members.first();
-      if (!user) return message.reply("⚠️ Menciona a un usuario.");
-
-      const userWarns = warns.get(user.id) || 0;
-      return message.channel.send(`📋 ${user.user.tag} tiene ${userWarns} advertencias.`);
-    }
-
-  } catch (error) {
-    console.error(error);
-    message.reply("⚠️ Ocurrió un error.");
+  if (userData.xp >= userData.level * 100) {
+    userData.level++;
+    message.channel.send(`🎉 ${message.author} subió a nivel ${userData.level}!`);
   }
 
+  levels.set(message.author.id, userData);
+});
+
+/* =======================
+   SLASH COMMANDS
+======================= */
+
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isChatInputCommand()) return;
+
+  if (interaction.commandName === 'ping') {
+    await interaction.reply('🏓 Pong!');
+  }
+
+  if (interaction.commandName === 'nivel') {
+    const userData = levels.get(interaction.user.id) || { xp: 0, level: 1 };
+
+    await interaction.reply(
+      `📊 Nivel: ${userData.level}\nXP: ${userData.xp}`
+    );
+  }
+
+  if (interaction.commandName === 'ban') {
+    if (!interaction.memberPermissions.has(PermissionsBitField.Flags.BanMembers))
+      return interaction.reply({ content: '❌ No tienes permiso.', ephemeral: true });
+
+    const user = interaction.options.getUser('usuario');
+    const member = interaction.guild.members.cache.get(user.id);
+
+    if (!member) return interaction.reply('Usuario no encontrado.');
+
+    await member.ban();
+
+    await interaction.reply(`🔨 ${user.tag} fue baneado.`);
+  }
+});
+
+/* =======================
+   LOGS AUTOMÁTICOS
+======================= */
+
+client.on('guildMemberRemove', member => {
+  const canal = member.guild.channels.cache.find(c => c.name === "logs");
+  if (!canal) return;
+
+  canal.send(`📢 ${member.user.tag} salió o fue expulsado.`);
 });
 
 client.login(process.env.TOKEN);

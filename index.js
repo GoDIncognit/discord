@@ -36,7 +36,6 @@ client.on('guildMemberAdd', member => {
 });
 
 client.on('messageCreate', async (message) => {
-  if (!message.guild) return;
   if (message.author.bot) return;
 
   try {
@@ -143,4 +142,5 @@ client.on('messageCreate', async (message) => {
 });
 
 client.login(process.env.TOKEN);
+
 

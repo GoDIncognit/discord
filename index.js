@@ -22,7 +22,7 @@ const client = new Client({
 const levels = new Map();
 const warns = new Map();
 
-client.once('clientReady', () => {
+client.once('Ready', () => {
   console.log(`🔥 ${client.user.tag} está online`);
 });
 
@@ -227,3 +227,4 @@ client.on("guildMemberRemove", member => {
 });
 
 client.login(process.env.TOKEN);
+

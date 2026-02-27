@@ -22,13 +22,16 @@ const client = new Client({
 const levels = new Map();
 const warns = new Map();
 
-client.once('Ready', () => {
+// ---------------------------
+// Evento ready
+// ---------------------------
+client.once('ready', () => {
   console.log(`🔥 ${client.user.tag} está online`);
 });
 
-/* ===============================
-   SISTEMA DE NIVELES
-================================ */
+// ---------------------------
+// Sistema de niveles
+// ---------------------------
 client.on('messageCreate', message => {
   if (!message.guild || message.author.bot) return;
 
@@ -44,14 +47,14 @@ client.on('messageCreate', message => {
   levels.set(message.author.id, data);
 });
 
-/* ===============================
-   INTERACCIONES (SLASH + BOTONES)
-================================ */
+// ---------------------------
+// Interacciones (slash + botones)
+// ---------------------------
 client.on('interactionCreate', async interaction => {
 
   try {
 
-    /* ================= DM PANEL ================= */
+    // ================= DM PANEL =================
     if (!interaction.guild) {
 
       if (interaction.isChatInputCommand()) {
@@ -78,6 +81,20 @@ client.on('interactionCreate', async interaction => {
           return interaction.reply({
             embeds: [embed],
             components: [row],
+            ephemeral: true
+          });
+        }
+
+        if (interaction.commandName === "invite") {
+          return interaction.reply({
+            content: "🔗 Invita al bot usando este link: https://discord.com/oauth2/authorize?client_id=1476975549376237639&permissions=8&integration_type=0&scope=bot",
+            ephemeral: true
+          });
+        }
+
+        if (interaction.commandName === "help") {
+          return interaction.reply({
+            content: "📌 Comandos disponibles:\n/ping\n/nivel\n/ban\n/kick\n/warn\n/warns\n/clear\n/panel\n/help\n/invite",
             ephemeral: true
           });
         }
@@ -110,8 +127,7 @@ client.on('interactionCreate', async interaction => {
       return;
     }
 
-    /* ================= SERVIDOR ================= */
-
+    // ================= Servidor =================
     if (interaction.isChatInputCommand()) {
 
       if (interaction.commandName === "ping") {
@@ -120,54 +136,38 @@ client.on('interactionCreate', async interaction => {
 
       if (interaction.commandName === "nivel") {
         const data = levels.get(interaction.user.id) || { xp: 0, level: 1 };
-
-        return interaction.reply(
-          `📊 Nivel: ${data.level}\nXP: ${data.xp}`
-        );
+        return interaction.reply(`📊 Nivel: ${data.level}\nXP: ${data.xp}`);
       }
 
       if (interaction.commandName === "ban") {
-
         if (!interaction.memberPermissions.has(PermissionsBitField.Flags.BanMembers)) {
-          return interaction.reply({
-            content: "❌ No tienes permiso.",
-            ephemeral: true
-          });
+          return interaction.reply({ content: "❌ No tienes permiso.", ephemeral: true });
         }
 
         const user = interaction.options.getUser("usuario");
         const member = interaction.guild.members.cache.get(user.id);
 
-        if (!member)
-          return interaction.reply("Usuario no encontrado.");
+        if (!member) return interaction.reply("Usuario no encontrado.");
 
         await member.ban();
-
         return interaction.reply(`🔨 ${user.tag} fue baneado.`);
       }
 
       if (interaction.commandName === "kick") {
-
         if (!interaction.memberPermissions.has(PermissionsBitField.Flags.KickMembers)) {
-          return interaction.reply({
-            content: "❌ No tienes permiso.",
-            ephemeral: true
-          });
+          return interaction.reply({ content: "❌ No tienes permiso.", ephemeral: true });
         }
 
         const user = interaction.options.getUser("usuario");
         const member = interaction.guild.members.cache.get(user.id);
 
-        if (!member)
-          return interaction.reply("Usuario no encontrado.");
+        if (!member) return interaction.reply("Usuario no encontrado.");
 
         await member.kick();
-
         return interaction.reply(`👢 ${user.tag} fue expulsado.`);
       }
 
       if (interaction.commandName === "warn") {
-
         const user = interaction.options.getUser("usuario");
         const count = warns.get(user.id) || 0;
         warns.set(user.id, count + 1);
@@ -176,7 +176,6 @@ client.on('interactionCreate', async interaction => {
       }
 
       if (interaction.commandName === "warns") {
-
         const user = interaction.options.getUser("usuario");
         const count = warns.get(user.id) || 0;
 
@@ -184,21 +183,30 @@ client.on('interactionCreate', async interaction => {
       }
 
       if (interaction.commandName === "clear") {
-
         if (!interaction.memberPermissions.has(PermissionsBitField.Flags.ManageMessages)) {
-          return interaction.reply({
-            content: "❌ No tienes permiso.",
-            ephemeral: true
-          });
+          return interaction.reply({ content: "❌ No tienes permiso.", ephemeral: true });
         }
 
         const cantidad = interaction.options.getInteger("cantidad");
 
         await interaction.deferReply({ ephemeral: true });
-
         await interaction.channel.bulkDelete(cantidad, true);
 
         return interaction.editReply(`🧹 ${cantidad} mensajes eliminados.`);
+      }
+
+      if (interaction.commandName === "invite") {
+        return interaction.reply({
+          content: "🔗 Invita al bot usando este link: https://discord.com/oauth2/authorize?client_id=1476975549376237639&permissions=8&integration_type=0&scope=bot",
+          ephemeral: true
+        });
+      }
+
+      if (interaction.commandName === "help") {
+        return interaction.reply({
+          content: "📌 Comandos disponibles:\n/ping\n/nivel\n/ban\n/kick\n/warn\n/warns\n/clear\n/panel\n/help\n/invite",
+          ephemeral: true
+        });
       }
 
     }
@@ -207,24 +215,19 @@ client.on('interactionCreate', async interaction => {
     console.error(error);
 
     if (interaction.isRepliable() && !interaction.replied) {
-      await interaction.reply({
-        content: "⚠ Ocurrió un error.",
-        ephemeral: true
-      });
+      await interaction.reply({ content: "⚠ Ocurrió un error.", ephemeral: true });
     }
   }
 
 });
 
-/* ===============================
-   LOGS AUTOMÁTICOS
-================================ */
+// ---------------------------
+// Logs automáticos
+// ---------------------------
 client.on("guildMemberRemove", member => {
   const canal = member.guild.channels.cache.find(c => c.name === "logs");
   if (!canal) return;
-
   canal.send(`📢 ${member.user.tag} salió o fue expulsado.`);
 });
 
 client.login(process.env.TOKEN);
-

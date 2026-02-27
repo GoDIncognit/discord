@@ -72,7 +72,8 @@ const commands = [
 
   { name: 'help', description: 'Muestra los comandos disponibles' },
 
-  { name: 'invite', description: 'Obtén el link para invitar el bot' }
+  { name: 'invite', description: 'Obtén el link para invitar el bot' },
+   { name: 'panel', description: 'Abrir panel privado en DM' }
 ];
 
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
